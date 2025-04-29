@@ -20,4 +20,6 @@ Simply download the application (GPTread.exe) and use it. Keep it mind it requir
 - Report: OAI Interaction - Report
 - Presentation: OIA Interaction - Presentation
 
+
+# DISCLAIMER
 Feel free to explore and experiment with it for your own amusement. However, it is not intended for use in this class or any official context. If you choose to use it for purposes beyond personal testing, I explicitly distance myself from those actions. Any misuse is solely the responsibility of the user, and I will not accept any liability or consequences resulting from it. This project was created purely for fun and to demonstrate how such a tool could be misused in academic settings or online assessments.
