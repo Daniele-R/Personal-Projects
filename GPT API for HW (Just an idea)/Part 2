@@ -1,0 +1,145 @@
+import pyautogui                        # Allows screenshots and mouse/keyboard actions (automated)
+from PIL import Image                   # Used to work with image files as screenshots will be saved as images
+import pytesseract                      # OCR (Optical Character Recognition) extracts text from images
+import openai                           # OpenAI API
+import tkinter as tk                    # GUI framework for creating a chatbox
+import time                             # Sleep
+import pygetwindow as gw                # Finds application windows (this is for us pretty much)
+import cv2
+import numpy as np
+
+# Set Tesseract path because sometimes it might be saved somewhere else, make sure you save it by default here and/or use this pathing and modify it as you need
+pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+
+# # OpenAI API
+client = openai.OpenAI(api_key="YOUR API GOES HERE")  # Replace with your real API key
+
+screen = pyautogui.screenshot()                                                                     # Get full screenshot
+screen = np.array(screen)                                                                           # Convert to numpy array
+screen = cv2.cvtColor(screen, cv2.COLOR_RGB2BGR)                                                    # Convert to BGR
+
+threshold = 0.5
+
+# Check if multiple choice
+template = cv2.imread('test2.png')                                                                  # import answer box template
+template_h, template_w = template.shape[:2]
+result = cv2.matchTemplate(screen, template, cv2.TM_CCOEFF_NORMED)
+min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)                                          # Get the best match position
+# print(f"Confidence level: {max_val:.3f}")
+                                         
+counter = 0
+
+def rerun_script():
+    global chat_history                                                                             # Allows updating the chat history in the GUI
+    # # Wait before taking the screenshot (I made a small delay that can be extended/reduced later on based on what we intend)
+    time.sleep(5)
+
+    # Find Notepad dynamically (this is the last import from above, you can see how it worst in the terminal)
+    windows = [win for win in gw.getAllWindows() if "Edge" in win.title]
+    if not windows:
+        print("Error: No Edge window found. Open Edge and try again.")                                      # For debugging purposes
+        exit()                                                                                              # Stops (duh)
+
+    app_window = windows[0]                                                                                 # Select first Notepad window (0 as is an array) in case more are open
+    left, top, width, height = app_window.left, app_window.top, app_window.width, app_window.height         # Structure of the window, takes the whole screen/window pretty much
+    screenshot = pyautogui.screenshot(region=(left, top+100, width, height))                                    # Ignoes the GUI and takes the inside, not the frame
+    screenshot.save("screenshot.png")                                                                       # Save for debugging
+
+    # Extract text using OCR
+    text = pytesseract.image_to_string(screenshot, config='--psm 6 --oem 3')                                # From their github | 6 for single block of text | OCR engine aval. 
+    print("Extracted Text:", text)                                                                          # Shows what has been extracted
+    
+    instruction = ( "In this chat session, I will be sharing screenshots of multiple choice questions, fill " \
+    "the blank, or organize correctly to match the correct answer. Whenever I do so, for when it is a multiple " \
+    "choice one, I need you to select the right answer by writing it and by telling me which of the many is the right " \
+    "one like [1st, 2nd, 3rd, 4th, ...]. Also, on the same line tell me how many correct answers there are formatted as [#]. For fill " \
+    "the blank and match the right answer simply write the answer. For all these questions I will be sharing, I dont " \
+    "want you to overly explain, but to give me a precise and short answer. Do not elaborate on the answer. As an " \
+    "example if the possible answers are: alpha, beta, gamma, and delta and the correct answers are alpha and gamma the " \
+    "response you should give would be: alpha, gamma [1st, 3rd] [2]")
+
+    chat_response = get_chatgpt_response(instruction + text)
+    chat_history.insert(tk.END, f"ChatGPT: {chat_response}\n\n")
+    chat_history.see(tk.END)   
+    print(chat_response)
+    click_answer(chat_response)                                                                             # Call automation function
+    threshold_f = 0.98
+    # Check if multiple choice
+    template_f = cv2.imread('Finish.png')                                                                   # import finish button template
+    template_f_h, template_f_w = template_f.shape[:2]
+    result_f = cv2.matchTemplate(screen, template_f, cv2.TM_CCOEFF_NORMED)
+    min_val, max_val_f, min_loc, max_loc_f = cv2.minMaxLoc(result_f)                                        # Get the best match position
+    if max_val_f >= threshold_f:
+        print(f"Finish button found {max_val_f:.2%} confidence!")
+
+        # Calculate center point of match
+        match_center_x = max_loc_f[0] + template_f_w // 2
+        match_center_y = max_loc_f[1] + template_f_h // 2
+
+        # --- Step 5: Move the mouse and click ---
+        pyautogui.moveTo(match_center_x, match_center_y, duration=0.3)
+        pyautogui.click()
+
+    elif counter > 0:
+        print("Not finished.")
+        # time.sleep(5)
+        rerun_script()
+        root.mainloop()
+
+# Function to run GPT response
+def get_chatgpt_response(prompt):
+    response = client.chat.completions.create(
+        model="gpt-4-turbo",                                                                            # "gpt-4" to "gpt-4-turbo" , both work
+        messages=[{"role": "user", "content": prompt}],                                                 # Sends input as the prompt/message
+        max_tokens=200                                                                                  # Prevents utilization of too many tokens, we can adjust this later at will
+    )
+    return response.choices[0].message.content
+
+# GUI Chatbox using Tkinter
+def send_message():                                                                                     # Chatbox creation
+    user_input = entry.get()
+    chat_history.insert(tk.END, f"You: {user_input}\n")
+
+    chat_response = get_chatgpt_response(user_input)
+    chat_history.insert(tk.END, f"ChatGPT: {chat_response}\n\n")
+
+    entry.delete(0, tk.END)
+    chat_history.see(tk.END)
+
+def click_answer(answer):
+    if answer[-2].isdigit():
+        for i in range(int(answer[-2])):
+            # print(i)
+            # print(answer[-8-(5*i)])
+            match answer[-8-(5*i)]:                                                                                   # Checks the answer number
+                case "1":
+                    pyautogui.click(max_loc[0] + (template_w*0.22), max_loc[1] + (template_h*0.16))                                                                     # Click checkbox
+                case "2":
+                    pyautogui.click(max_loc[0] + (template_w*0.71), max_loc[1] + (template_h*0.16))
+                case "3":
+                    pyautogui.click(max_loc[0] + (template_w*0.22), max_loc[1] + (template_h*0.35))
+                case "4":
+                    pyautogui.click(max_loc[0] + (template_w*0.71), max_loc[1] + (template_h*0.35))
+                case _:
+                    print("Error finding answer!")
+    else:
+        print("Error with GPT response")
+
+root = tk.Tk()                                                                                          # Sets Up the chatbox
+root.title("GE stands for Generally Exhausting")                                                        # Tittle
+
+chat_history = tk.Text(root, height=20, width=50)                                                       # Size of the chatbox
+chat_history.pack()                                                                                     # History of the chat
+
+entry = tk.Entry(root, width=50)                                                                        # Chat entry
+entry.pack()                                                                                            # Input field
+
+send_button = tk.Button(root, text="Send", command=send_message)                                        # Create send button
+send_button.pack()                                                                                      # Display button
+
+rerun_button = tk.Button(root, text="Re-Run", command=rerun_script)                                     # Re-run button
+rerun_button.pack()                                                                                     # Display button
+
+counter += 1
+rerun_script()                                                                                          # Run the script for the first time when the app starts
+root.mainloop()                                                                                         # Runs the chatbox until done
