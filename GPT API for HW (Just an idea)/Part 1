@@ -1,0 +1,84 @@
+import pyautogui                        # Allows screenshots and mouse/keyboard actions (automated)
+from PIL import Image                   # Used to work with image files as screenshots will be saved as images
+import pytesseract                      # OCR (Optical Character Recognition) extracts text from images
+import openai                           # OpenAI API
+import tkinter as tk                    # GUI framework for creating a chatbox
+import time                             # Sleep
+import pygetwindow as gw                # Finds application windows (this is for us pretty much)
+
+# Set Tesseract path because sometimes it might be saved somewhere else, make sure you save it by default here and/or use this pathing and modify it as you need
+pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+
+# OpenAI API
+client = openai.OpenAI(api_key="YOUR API GOES HERE")  # Replace with your real API key
+
+
+# Wait before taking the screenshot (I made a small delay that can be extended/reduced later on based on what we intend)
+time.sleep(5)
+
+def rerun_script():
+    global chat_history                                                                                     # Allows updating the chat history in the GUI
+
+   
+    windows = [win for win in gw.getAllWindows() if "Google Chrome" in win.title]                           # Find Notepad dynamically (this is the last import from above, you can see how it worst in the terminal)
+    if not windows:
+        print("Error: No Notepad window found. Open Notepad and try again.")                                # For debugging purposes
+        exit()                                                                                              # Stops (duh)
+
+    app_window = windows[0]                                                                                 # Select first Notepad window (0 as is an array) in case more are open
+    left, top, width, height = app_window.left, app_window.top, app_window.width, app_window.height         # Structure of the window, takes the whole screen/window pretty much
+    screenshot = pyautogui.screenshot(region=(left, top, width, height))                                    # Ignoes the GUI and takes the inside, not the frame
+    screenshot.save("screenshot.png")                                                                       # Save for debugging
+
+    # Extract text using OCR
+    text = pytesseract.image_to_string(screenshot, config='--psm 6 --oem 3')                                # From their github | 6 for single block of text | OCR engine aval. 
+    print("Extracted Text:", text)                 
+    
+    instruction = ( "In this chat session, I will be sharing screenshots of multiple choice questions, fill " \
+    "the blank, or organize correctly to match the correct answer. Whenever I do so, for when it is a multiple " \
+    "choice one, I need you to select the right answer by writing it and by telling me which of the many is the right " \
+    "one like [1st, 2nd, 3rd, 4th, ...] For Fill the blank and match the right answer simply write the answer. For all " \
+    "these questions I will be sharing, I dont want you to overly explain, but to give me a precise and short answer. " \
+    "Do not elaborate on the answer. ")
+
+    chat_response = get_chatgpt_response(instruction + text)
+    chat_history.insert(tk.END, f"ChatGPT: {chat_response}\n\n")
+    chat_history.see(tk.END)                                                                            # Shows what has been extracted
+
+# Function to run GPT response
+def get_chatgpt_response(prompt):
+    response = client.chat.completions.create(
+        model="gpt-4o",                                                                                 # "gpt-4" to "gpt-4-turbo" , both work
+        messages=[{"role": "user", "content": prompt}],                                                 # Sends input as the prompt/message
+        max_tokens=500                                                                                  # Prevents utilization of too many tokens, we can adjust this later at will
+    )
+    return response.choices[0].message.content
+
+# GUI Chatbox using Tkinter
+def send_message():                                                                                     # Chatbox creation
+    user_input = entry.get()
+    chat_history.insert(tk.END, f"You: {user_input}\n")
+
+    chat_response = get_chatgpt_response(user_input)
+    chat_history.insert(tk.END, f"ChatGPT: {chat_response}\n\n")
+
+    entry.delete(0, tk.END)
+    chat_history.see(tk.END)
+
+root = tk.Tk()                                                                                          # Sets Up the chatbox
+root.title("GE stands for Generally Exhausting")                                                        # Tittle
+
+chat_history = tk.Text(root, height=20, width=50)                                                       # Size of the chatbox
+chat_history.pack()                                                                                     # History of the chat
+
+entry = tk.Entry(root, width=50)                                                                        # Chat entry
+entry.pack()                                                                                            # Input field
+
+send_button = tk.Button(root, text="Send", command=send_message)                                        # Create send button
+send_button.pack()                                                                                      # Display button
+
+rerun_button = tk.Button(root, text="Re-Run", command=rerun_script)                                     # Re-run button
+rerun_button.pack()                                                                                     # Display button
+
+rerun_script()                                                                                          # Run the script for the first time when the app starts
+root.mainloop()                                                                                         # Runs the chatbox until done
