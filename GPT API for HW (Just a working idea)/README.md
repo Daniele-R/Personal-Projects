@@ -17,7 +17,7 @@ This part of the code does the same as part 1, but it implements the user automa
 Simply download the application (GPTread.exe) and use it. Keep it mind it requires the first chrome tab to be the one being read, and you must have actual EYE CONTACT with the screen/target as that would be the screenshot taken. Think it this way, the script is simply seeing exactly what you seeing, so you must have in display what you want to be targeted. Just play with it until it works haha
 
 ## Video demo
-[Video demo](https://github.com/Daniele-R/Personal-Projects/releases/download/Demo/GPT.API.for.HW.-.demo.mp4)
+[T H E   D E M O](https://github.com/Daniele-R/Personal-Projects/releases/download/Demo/GPT.API.for.HW.-.demo.mp4)
 
 ## Both report and presentation will be shared in here as well for further understanding
 - Report: OAI Interaction - Report
