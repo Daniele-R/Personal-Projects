@@ -1,0 +1,25 @@
+# IoC Scrape Report
+Source:         OTX (AlienVault)
+Pages:          1
+Since filter:   none
+Pulled total:   785
+New (DB):       785
+Exported:       785
+
+Pulled by type:
+  - domain: 468
+  - hostname: 118
+  - filehash-sha256: 69
+  - url: 12
+  - filehash-md5: 40
+  - filehash-sha1: 67
+  - ipv4: 11
+
+Exported by type:
+  - domain: 468
+  - hostname: 118
+  - filehash-sha256: 69
+  - url: 12
+  - filehash-md5: 40
+  - filehash-sha1: 67
+  - ipv4: 11
