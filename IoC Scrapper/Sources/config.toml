@@ -1,0 +1,19 @@
+# config.toml
+
+# AlienVault API
+[otx]
+api_key = "d8baf9f6244558bb6d5bf93d828b2804d280c7bc49ece28558e73124eef194d3"
+
+# MS-ISAC TAXII
+[msisac]
+taxii_url = "https://cyware.cisecurity.org/ctixapi/ctix21/taxii2/"
+collection_id = "c350272d-8a47-4371-95e0-295208a2d9ee"
+username = "7119e971-aac1-4a6b-a05a-81132c95d3ac"
+password = "e3824969-8e27-4cf2-9473-ca031ecabd3e"
+
+# [msisac.collections]
+# green     = "fb5a14aa-3864-4bc7-9d43-b0aecf440f7a"
+# white     = "1b088e6e-577a-416a-bf83-90cea33c282b"
+# msisac    = "c350272d-8a47-4371-95e0-295208a2d9ee"
+# federal   = "d0c0e101-1ee3-49f0-9922-182132fab301"
+# curated   = "97a00db6-c2aa-4fde-8064-76c947ae3074"
