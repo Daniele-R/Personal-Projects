@@ -1,3 +1,6 @@
+
+<img width="860" height="706" alt="ImageView" src="https://github.com/user-attachments/assets/8eb5739e-5d2d-410e-81e9-63cca71f79a6" />
+
 # You got that right, IOC threat hunting just dropped
 Probably nothing new, but here is a project for those who might struggle due to old processes, lack of funding, or simply lack of knowledge (just like me lol)
 
